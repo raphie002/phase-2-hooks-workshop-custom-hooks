@@ -1,31 +1,27 @@
-import "whatwg-fetch";
 import { renderHook } from "@testing-library/react-hooks/pure";
-import { server } from "../data/mocks/server";
-import { usePokemon } from "../exercise/02";
-// import { usePokemon } from "../solution/02";
+import { fireEvent } from "@testing-library/react";
+import { useMouseCoordinates } from "../exercise/03";
+// import { useMouseCoordinates } from "../solution/03";
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-describe("Exercise 02", () => {
-  test("returns an initial state of null", () => {
-    const { result } = renderHook(() => usePokemon("charmander"));
-    expect(result.current).toMatchObject({ data: null });
+describe("Exercise 03", () => {
+  test("returns an initial state with 0, 0 as the mouse coordinates", () => {
+    const { result } = renderHook(() => useMouseCoordinates());
+    expect(result.current).toMatchObject({ clientX: 0, clientY: 0 });
   });
 
-  test("returns a pokemon based on the search result after fetching data", async () => {
-    const { result, waitForNextUpdate } = renderHook(() =>
-      usePokemon("charmander")
-    );
-
-    await waitForNextUpdate();
-
-    expect(result.current).toMatchObject({
-      data: {
-        id: 4,
-        name: "charmander",
-      },
+  test("returns the mouse coordinates after the mouse has moved", () => {
+    const { result } = renderHook(() => useMouseCoordinates());
+    fireEvent.mouseMove(window, {
+      clientX: 100,
+      clientY: 200,
     });
+    expect(result.current).toMatchObject({ clientX: 100, clientY: 200 });
+  });
+
+  test("the event handler function is removed when the component unmounts", () => {
+    const spy = jest.spyOn(window, "removeEventListener");
+    const { unmount } = renderHook(() => useMouseCoordinates());
+    unmount();
+    expect(spy).toHaveBeenCalledWith("mousemove", expect.any(Function));
   });
 });

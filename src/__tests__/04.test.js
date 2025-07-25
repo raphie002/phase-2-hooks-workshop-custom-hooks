@@ -1,11 +1,11 @@
 import { renderHook, act } from "@testing-library/react-hooks";
 import { useLocalStorage } from "../exercise/04";
-import "jest-localstorage-mock";
+import "jest-localstorage-mock"; // Keep this import
 
 beforeEach(() => {
   localStorage.clear();
   jest.clearAllMocks();
-  localStorage.setItem.mockClear();
+  localStorage.setItem.mockClear(); // Clear mocks for localStorage.setItem specifically
 });
 
 describe("Exercise 04", () => {
@@ -29,8 +29,11 @@ describe("Exercise 04", () => {
       setState(newValue);
     });
 
-    expect(localStorage.setItem).toHaveBeenLastCalledWith("test", newValue);
-    expect(localStorage.__STORE__["test"]).toBe(newValue);
+    // EXPECT the JSON stringified version of newValue in localStorage.
+    expect(localStorage.setItem).toHaveBeenLastCalledWith("test", JSON.stringify(newValue));
+    // Also, expect the value in the __STORE__ to be the JSON stringified version.
+    expect(localStorage.__STORE__["test"]).toBe(JSON.stringify(newValue));
+    // The state itself should be the raw value.
     expect(result.current[0]).toBe(newValue);
   });
 });

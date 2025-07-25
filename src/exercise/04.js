@@ -1,34 +1,55 @@
 import { useEffect, useState } from "react";
 
-/* 
-  the two parameters for this function are: 
-  - key: the key on localStorage where we are saving this data
-  - initialValue: the initial value of state
-*/
-export function useLocalStorage(key, initialValue) {
-  /* 
-    ✅ in this hook, use the useState hook. For the initial value for state:
-    use the value saved in localStorage OR the initialValue from the function parameters 
-  */
+function getLocalStorageValue(key, initialValue) {
+  try {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue === null) {
+      return initialValue;
+    }
+    return JSON.parse(storedValue);
+  } catch (error) {
+    const storedValue = localStorage.getItem(key); 
+    return storedValue !== null ? storedValue : initialValue; 
+  }
+}
 
-  /* 
-   ✅ write a useEffect hook 
-   in the useEffect, when state is updated, save the state to localStorage
-   don't forget the dependencies array!
-  */
-  useEffect(() => {});
 
-  /* 
-   ✅ return the same interface as useState:
-   an array with state and a setState function
-  */
-  // 👀 return [state, setState]
+function setLocalStorageValue(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error("Error setting localStorage key:", key, error);
+  }
+}
+
+export function useLocalStorage(key, initialValue = null) {
+  const [state, setState] = useState(() => getLocalStorageValue(key, initialValue));
+
+  // Effect to save state to localStorage
+  useEffect(() => {
+    setLocalStorageValue(key, state);
+  }, [key, state]);
+
+  // Effect to listen for storage events (for bonus 2)
+  useEffect(() => {
+    function handleStorageChange(event) {
+      if (event.key === key) {
+        setState(getLocalStorageValue(key, initialValue));
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [key, initialValue]);
+
+  return [state, setState];
 }
 
 function Form() {
-  // ✅ after implementing the useLocalStorage hook, replace useState with useLocalStorage
-  // don't forget to pass in both arguments (a key and an initialValue)
-  const [name, setName] = useState("");
+  const [name, setName] = useLocalStorage("username", ""); // Used a unique key
   console.log(name);
 
   return (
@@ -41,15 +62,14 @@ function Form() {
 }
 
 function FormWithObject() {
-  // 🤓 save me for the bonus! when you're ready, update this useState to use your useLocalStorage hook instead
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useLocalStorage("blogPost", { // Used a unique key
     title: "",
     content: "",
   });
 
   function handleChange(e) {
-    setFormData(formData => ({
-      ...formData,
+    setFormData(prevFormData => ({
+      ...prevFormData,
       [e.target.name]: e.target.value,
     }));
   }
